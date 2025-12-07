@@ -109,10 +109,3 @@ rg "useHabitStore|habits" src || true
 ```
 
 - To change persistence behavior, edit `src/store/store.ts` and modify the `persist` options or remove the middleware wrapper.
-
-## Next steps I can take
-
-- Link the README directly to the exact store and component files with relative paths (I can add quick code snippets showing the real components in this repo).
-- Add a small example test for the store API (unit test) or a Storybook story demonstrating the `AddFormHabits` + `HabitList` flow.
-
-If you'd like one of those, tell me which and I will implement it next.
