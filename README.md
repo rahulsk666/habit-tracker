@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# Habit Tracker — React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small habit-tracking app built with React + TypeScript and Vite. This repo demonstrates a minimal UI for adding, toggling, and removing habits, and uses Zustand for state management (with persistence and devtools enabled).
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Install dependencies and run the dev server:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open `http://localhost:5173` (Vite default) to view the app.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Project Structure (high level)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `src/main.tsx` — app entry and React DOM mount
+- `src/App.tsx` — top-level UI and routes (single-page)
+- `src/components/` — UI components (e.g. `AddFormHabits.tsx`, `HabitList.tsx`)
+- `src/store/store.ts` — Zustand store (habits state)
+- `src/App.css`, `src/index.css`, `src/assets/` — styles and assets
+
+## State Management (Zustand in this branch)
+
+This branch uses Zustand for state management. The primary store is located at:
+
+```text
+src/store/store.ts
 ```
+
+The store exports a default hook `useHabitStore` with the following shape:
+
+- `habits: Habit[]` — current list of habits
+- `addHabit(name: string, frequency: 'daily' | 'weekly')` — add a new habit
+- `removeHabit(id: string)` — remove a habit by id
+- `toggleHabit(id: string, date: string)` — toggle completion for a habit on a specific date
+- `fetchHabits()` — an async helper that loads mock habits (used at app start)
+- `isLoading` and `error` — basic loading/error flags
+
+The `Habit` interface defined in the store looks like this:
+
+```ts
+export interface Habit {
+  id: string;
+  name: string;
+  frequency: "daily" | "weekly";
+  completedDates: string[];
+  createdAt: string;
+}
+```
+
+The store uses `persist` (so state is saved to `localStorage` under the key `habits-local`) and `devtools` middleware. See `src/store/store.ts` to adjust persistence or disable devtools.
+
+### Example: using the store in a component
+
+```tsx
+import React from "react";
+import useHabitStore from "./store/store";
+
+export default function Example() {
+  const { habits, addHabit, toggleHabit, removeHabit } = useHabitStore();
+
+  return (
+    <div>
+      <button onClick={() => addHabit("Read", "daily")}>Add Read</button>
+      <ul>
+        {habits.map((h) => (
+          <li key={h.id}>
+            {h.name} ({h.frequency})
+            <button
+              onClick={() =>
+                toggleHabit(h.id, new Date().toISOString().slice(0, 10))
+              }
+            >
+              Toggle Today
+            </button>
+            <button onClick={() => removeHabit(h.id)}>Remove</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Where to look in this repo
+
+- `src/components/AddFormHabits.tsx` — shows how the app calls `addHabit(name, frequency)`
+- `src/components/HabitList.tsx` — shows how `habits`, `toggleHabit`, and `removeHabit` are used in the UI
+- `src/store/store.ts` — the full store implementation with `persist` and `devtools`
+
+## Redux (notes)
+
+This project/branch uses Zustand. If you prefer Redux, a typical Redux Toolkit layout would include `src/app/store.ts` and `src/features/*` slices created with `createSlice`. There is no Redux setup in the current branch, but the README previously contained generic guidance for adding Redux if needed.
+
+## Habit Tracker Features
+
+- Add habits with a name and frequency (`daily` | `weekly`)
+- Toggle completion for a specific date (stored in `completedDates` per habit)
+- Persistent local storage of habits via Zustand `persist`
+
+## Development tips
+
+- To find where the store API is used, search the `src` directory for `useHabitStore` or `habits`:
+
+```bash
+rg "useHabitStore|habits" src || true
+```
+
+- To change persistence behavior, edit `src/store/store.ts` and modify the `persist` options or remove the middleware wrapper.
+
+## Next steps I can take
+
+- Link the README directly to the exact store and component files with relative paths (I can add quick code snippets showing the real components in this repo).
+- Add a small example test for the store API (unit test) or a Storybook story demonstrating the `AddFormHabits` + `HabitList` flow.
+
+If you'd like one of those, tell me which and I will implement it next.
