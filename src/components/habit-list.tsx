@@ -41,7 +41,7 @@ const HabitList: React.FC = () => {
     >
       {habits.map((habit) => {
         return (
-          <Paper key={habit.id} elevation={2} sx={{ p: 2 }}>
+          <Paper key={habit.id} elevation={2} sx={{ p: 2, mt: 4 }}>
             <Grid container alignItems="center">
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="h6">{habit.name}</Typography>
